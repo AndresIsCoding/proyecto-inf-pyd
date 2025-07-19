@@ -2,3 +2,5 @@ ray
 fastapi
 uvicorn
 pandas
+lxml
+yfinance
