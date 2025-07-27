@@ -1,6 +1,13 @@
+<<<<<<< Updated upstream
 ray
 fastapi
 uvicorn
 pandas
-lxml
-yfinance
+=======
+fastapi==0.110.0
+uvicorn==0.29.0
+pandas==2.2.2
+yfinance==0.2.40
+numpy==1.26.4
+lxml==5.2.2  # Necesaria para pd.read_html()
+>>>>>>> Stashed changes

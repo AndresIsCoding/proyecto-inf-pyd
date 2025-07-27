@@ -1,6 +1,13 @@
 ray
 fastapi
 uvicorn
+<<<<<<< Updated upstream
+pandas
+=======
 pandas
 lxml
 yfinance
+ray
+ray[serve]
+numpy==1.25.2
+>>>>>>> Stashed changes
