@@ -6,7 +6,7 @@ services:
       context: ./ms_loader
     ports:
       - "8000:8000"
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    command: uvicorn app:app --host 0.0.0.0 --port 8000
     networks:
       - ms_net
 
@@ -15,11 +15,12 @@ services:
       context: ./ms_stats
     ports:
       - "8001:8001"
-    command: uvicorn main:app --host 0.0.0.0 --port 8001
+    command: python app.py
     networks:
       - ms_net
     depends_on:
-      - ms_loader
+      - ms_loader 
+    shm_size: '1g'
 
 networks:
   ms_net:

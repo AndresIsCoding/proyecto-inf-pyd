@@ -1,13 +1,31 @@
-<<<<<<< Updated upstream
-ray
-fastapi
-uvicorn
-pandas
-=======
+# FastAPI and ASGI server
 fastapi==0.110.0
-uvicorn==0.29.0
+uvicorn[standard]==0.29.0
+
+# Data processing
 pandas==2.2.2
-yfinance==0.2.40
 numpy==1.26.4
-lxml==5.2.2  # Necesaria para pd.read_html()
->>>>>>> Stashed changes
+
+# Financial data
+yfinance==0.2.65
+
+# Web scraping and parsing
+lxml==5.2.2
+beautifulsoup4==4.12.3
+html5lib==1.1
+
+# HTTP requests (yfinance dependency)
+requests==2.31.0
+urllib3==2.2.1
+
+# Performance and caching
+aiofiles==23.2.0
+
+# Logging and monitoring
+python-multipart==0.0.9
+
+# Security
+cryptography==42.0.5
+
+# Optional but recommended for production
+gunicorn==21.2.0

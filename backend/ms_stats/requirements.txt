@@ -1,13 +1,9 @@
-ray
-fastapi
-uvicorn
-<<<<<<< Updated upstream
-pandas
-=======
-pandas
-lxml
-yfinance
-ray
-ray[serve]
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pandas==2.1.3
 numpy==1.25.2
->>>>>>> Stashed changes
+requests==2.31.0
+ray[serve]==2.8.0
+starlette==0.27.0
+httpx==0.25.2 
+protobuf==3.20.*
