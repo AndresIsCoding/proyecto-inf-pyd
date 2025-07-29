@@ -8,6 +8,9 @@ import logging
 import os
 from starlette.requests import Request
 from starlette.responses import JSONResponse
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+from starlette.applications import Starlette
 import asyncio
 import json
 import time
@@ -159,28 +162,43 @@ class StatsApp:
         finally:
             self.loading = False
     
+    def _add_cors_headers(self, response):
+        """Añadir headers CORS a la respuesta."""
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+        return response
+    
     async def __call__(self, request: Request):
         path = request.url.path
-        logger.info(f"Procesando request: {path}")
+        method = request.method
+        logger.info(f"Procesando request: {method} {path}")
+        
+        # Manejar preflight requests (OPTIONS)
+        if method == "OPTIONS":
+            response = JSONResponse(content={})
+            return self._add_cors_headers(response)
         
         try:
             # Ruta principal y health check
             if path == "/" or path == "/health":
-                return await self._get_health()
+                response = await self._get_health()
+                return self._add_cors_headers(response)
             
             # Verificar si hay datos disponibles para rutas de stats
             if path.startswith("/stats") and path != "/stats/reload":
                 if self.df is None:
                     if self.loading:
-                        return JSONResponse(
+                        response = JSONResponse(
                             status_code=503,
                             content={
                                 "error": "Datos cargando",
                                 "message": "El servicio está cargando datos desde ms_loader, intenta en unos segundos"
                             }
                         )
+                        return self._add_cors_headers(response)
                     else:
-                        return JSONResponse(
+                        response = JSONResponse(
                             status_code=503,
                             content={
                                 "error": "Datos no disponibles",
@@ -188,29 +206,35 @@ class StatsApp:
                                 "hint": "Usa /stats/reload para reintentar la carga"
                             }
                         )
+                        return self._add_cors_headers(response)
             
             # Rutas de estadísticas
             if path == "/stats" or path == "/stats/" or path == "/stats/basic":
-                return await self._get_basic_stats()
+                response = await self._get_basic_stats()
+                return self._add_cors_headers(response)
             elif path == "/stats/summary":
-                return await self._get_summary()
+                response = await self._get_summary()
+                return self._add_cors_headers(response)
             elif path == "/stats/prices":
-                return await self._get_price_stats()
+                response = await self._get_price_stats()
+                return self._add_cors_headers(response)
             elif path.startswith("/stats/by_ticker/"):
                 ticker = path.split("/stats/by_ticker/")[-1]
-                return await self._get_ticker_stats(ticker)
+                response = await self._get_ticker_stats(ticker)
+                return self._add_cors_headers(response)
             elif path == "/stats/reload":
                 logger.info("🔄 Recibida petición de reload manual")
                 success = self.reload_data()
-                return JSONResponse(content={
+                response = JSONResponse(content={
                     "success": success,
                     "message": "Datos recargados exitosamente" if success else "Error recargando datos - verifica que ms_loader esté disponible",
                     "records": len(self.df) if self.df is not None else 0,
                     "columns": list(self.df.columns) if self.df is not None else [],
                     "loading": self.loading
                 })
+                return self._add_cors_headers(response)
             else:
-                return JSONResponse(
+                response = JSONResponse(
                     status_code=404,
                     content={
                         "error": "Endpoint no encontrado",
@@ -226,13 +250,15 @@ class StatsApp:
                         ]
                     }
                 )
+                return self._add_cors_headers(response)
                 
         except Exception as e:
             logger.error(f"Error en StatsApp: {e}")
-            return JSONResponse(
+            response = JSONResponse(
                 status_code=500,
                 content={"error": f"Error interno: {str(e)}"}
             )
+            return self._add_cors_headers(response)
     
     async def _get_health(self):
         """Health check y información del servicio."""
