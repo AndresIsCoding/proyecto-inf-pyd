@@ -1,0 +1,258 @@
+import React, { useState, useEffect } from 'react'; 
+import './App.css'
+
+const MS_STATS_URL = "http://localhost:8001"; // Your ms_stats service URL
+
+// Helper component to display JSON data
+const JsonDisplay = ({ data, error }) => {
+    if (error) {
+        return <pre className="bg-red-900 text-red-200 p-4 rounded-lg overflow-auto text-sm whitespace-pre-wrap break-all min-h-[100px]">{JSON.stringify(error, null, 2)}</pre>;
+    }
+    if (!data) {
+        return <pre className="bg-gray-800 text-gray-400 p-4 rounded-lg overflow-auto text-sm whitespace-pre-wrap break-all min-h-[100px]">No data loaded yet.</pre>;
+    }
+    return <pre className="bg-gray-800 text-gray-200 p-4 rounded-lg overflow-auto text-sm whitespace-pre-wrap break-all min-h-[100px]">{JSON.stringify(data, null, 2)}</pre>;
+};
+
+// Main App component
+const App = () => {
+    // State for fetched data
+    const [healthData, setHealthData] = useState(null);
+    const [reloadResult, setReloadResult] = useState(null);
+    const [basicStats, setBasicStats] = useState(null);
+    const [summaryStats, setSummaryStats] = useState(null);
+    const [priceStats, setPriceStats] = useState(null);
+    const [tickerStats, setTickerStats] = useState(null);
+
+    // State for input fields
+    const [tickerInput, setTickerInput] = useState('');
+
+    // State for loading indicators
+    const [loading, setLoading] = useState({
+        health: false,
+        reload: false,
+        basic: false,
+        summary: false,
+        price: false,
+        ticker: false,
+    });
+
+    // State for errors
+    const [error, setError] = useState({
+        health: null,
+        reload: null,
+        basic: null,
+        summary: null,
+        price: null,
+        ticker: null,
+    });
+
+    // Helper function to make API calls
+    const fetchData = async (endpoint, setter, loadingKey, errorKey, method = 'GET') => {
+        setLoading(prev => ({ ...prev, [loadingKey]: true }));
+        setError(prev => ({ ...prev, [errorKey]: null }));
+        try {
+            const response = await fetch(`${MS_STATS_URL}${endpoint}`, { method });
+            const data = await response.json();
+            if (response.ok) {
+                setter(data);
+            } else {
+                setError(prev => ({ ...prev, [errorKey]: data }));
+                setter(null); // Clear previous data on error
+            }
+        } catch (err) {
+            setError(prev => ({ ...prev, [errorKey]: { message: `Network error: ${err.message}. Ensure ms_stats is running at ${MS_STATS_URL}.` } }));
+            setter(null); // Clear previous data on network error
+        } finally {
+            setLoading(prev => ({ ...prev, [loadingKey]: false }));
+        }
+    };
+
+    // Fetch Health Status
+    const fetchHealth = () => fetchData('/health', setHealthData, 'health', 'health');
+
+    // Reload Data
+    const reloadStatsData = async () => {
+        setLoading(prev => ({ ...prev, reload: true }));
+        setError(prev => ({ ...prev, reload: null }));
+        try {
+            const response = await fetch(`${MS_STATS_URL}/stats/reload`, { method: 'GET' });
+            const data = await response.json();
+            setReloadResult(data);
+            if (!response.ok) {
+                setError(prev => ({ ...prev, reload: data }));
+            }
+            fetchHealth(); // Refresh health status after reload attempt
+        } catch (err) {
+            setError(prev => ({ ...prev, reload: { message: `Error reloading data: ${err.message}` } }));
+        } finally {
+            setLoading(prev => ({ ...prev, reload: false }));
+        }
+    };
+
+    // Fetch Basic Stats
+    const fetchBasicStats = () => fetchData('/stats/basic', setBasicStats, 'basic', 'basic');
+
+    // Fetch Summary Stats
+    const fetchSummaryStats = () => fetchData('/stats/summary', setSummaryStats, 'summary', 'summary');
+
+    // Fetch Price Stats
+    const fetchPriceStats = () => fetchData('/stats/prices', setPriceStats, 'price', 'price');
+
+    // Fetch Ticker Stats
+    const fetchTickerStats = () => {
+        if (!tickerInput.trim()) {
+            setError(prev => ({ ...prev, ticker: { message: "Please enter a ticker symbol." } }));
+            setTickerStats(null);
+            return;
+        }
+        fetchData(`/stats/by_ticker/${tickerInput.toUpperCase()}`, setTickerStats, 'ticker', 'ticker');
+    };
+
+    // Initial load of health status when the component mounts
+    useEffect(() => {
+        fetchHealth();
+    }, []);
+
+    // Function to render status indicator
+    const renderStatusIndicator = (status) => {
+        let className = 'status-unknown';
+        if (status === 'ok' || status === true) {
+            className = 'status-ok';
+        } else if (status === 'error' || status === false) {
+            className = 'status-error';
+        } else if (status === 'starting' || status === 'loading') {
+            className = 'status-loading';
+        }
+        return <span className={`status-indicator ${className}`}></span>;
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 p-4 font-inter">
+            <div className="max-w-6xl mx-auto py-8 px-6 bg-gray-900 rounded-2xl shadow-2xl">
+                <h1 className="text-5xl font-extrabold text-center mb-12 text-blue-400 drop-shadow-lg">
+                    📊 Financial Stats Dashboard
+                </h1>
+
+                {/* Health Check Section */}
+                <div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
+                    <h2 className="text-3xl font-semibold mb-6 text-blue-300">Service Health</h2>
+                    <div className="text-lg mb-6">
+                        {loading.health ? (
+                            <p className="text-gray-400">Fetching health status...</p>
+                        ) : error.health ? (
+                            <p className="text-red-400">Error: {error.health.message || JSON.stringify(error.health)}</p>
+                        ) : healthData && (
+                            <>
+                                <p className="mb-2">
+                                    <strong>ms_stats Service:</strong> {renderStatusIndicator(healthData.data_loaded)} {healthData.data_loaded ? 'Ready' : (healthData.loading ? 'Loading' : 'No Data')}
+                                </p>
+                                <p className="ml-4 text-gray-400">Records Loaded: {healthData.records}</p>
+                                <p className="ml-4 text-gray-400">Message: {healthData.message}</p>
+                                <p className="mt-4 mb-2">
+                                    <strong>ms_loader Connection:</strong> {renderStatusIndicator(healthData.ms_loader_connection)} {healthData.ms_loader_connection}
+                                </p>
+                                <p className="ml-4 text-gray-400">Loader Status: {JSON.stringify(healthData.ms_loader_status, null, 2)}</p>
+                            </>
+                        )}
+                    </div>
+                    <button
+                        onClick={fetchHealth}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 ease-in-out transform hover:scale-105"
+                        disabled={loading.health}
+                    >
+                        {loading.health ? 'Refreshing...' : 'Refresh Health'}
+                    </button>
+                </div>
+
+                {/* Reload Data Section */}
+                <div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
+                    <h2 className="text-3xl font-semibold mb-6 text-purple-300">Reload Data</h2>
+                    <p className="mb-6 text-gray-300">Manually trigger a data reload from `ms_loader`. This is useful if data loading failed initially.</p>
+                    <button
+                        onClick={reloadStatsData}
+                        className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition duration-300 ease-in-out transform hover:scale-105"
+                        disabled={loading.reload}
+                    >
+                        {loading.reload ? 'Reloading...' : 'Reload Data'}
+                    </button>
+                    {reloadResult && (
+                        <div className="mt-6 text-sm text-gray-300">
+                            <p className={reloadResult.success ? 'text-green-400' : 'text-red-400'}>
+                                {reloadResult.message}
+                            </p>
+                            <JsonDisplay data={reloadResult} error={error.reload} />
+                        </div>
+                    )}
+                </div>
+
+                {/* Statistics Sections Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    {/* Basic Stats */}
+                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+                        <h2 className="text-3xl font-semibold mb-6 text-green-300">Basic Statistics</h2>
+                        <button
+                            onClick={fetchBasicStats}
+                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
+                            disabled={loading.basic}
+                        >
+                            {loading.basic ? 'Loading...' : 'Get Basic Stats'}
+                        </button>
+                        <JsonDisplay data={basicStats} error={error.basic} />
+                    </div>
+
+                    {/* Summary Stats */}
+                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+                        <h2 className="text-3xl font-semibold mb-6 text-yellow-300">Data Summary</h2>
+                        <button
+                            onClick={fetchSummaryStats}
+                            className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
+                            disabled={loading.summary}
+                        >
+                            {loading.summary ? 'Loading...' : 'Get Summary'}
+                        </button>
+                        <JsonDisplay data={summaryStats} error={error.summary} />
+                    </div>
+                </div>
+
+                {/* Price Stats */}
+                <div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
+                    <h2 className="text-3xl font-semibold mb-6 text-red-300">Price Statistics</h2>
+                    <button
+                        onClick={fetchPriceStats}
+                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
+                        disabled={loading.price}
+                    >
+                        {loading.price ? 'Loading...' : 'Get Price Stats'}
+                    </button>
+                    <JsonDisplay data={priceStats} error={error.price} />
+                </div>
+
+                {/* Ticker Specific Stats */}
+                <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
+                    <h2 className="text-3xl font-semibold mb-6 text-indigo-300">Ticker Statistics</h2>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
+                        <input
+                            type="text"
+                            id="tickerInput"
+                            placeholder="Enter Ticker (e.g., AAPL)"
+                            value={tickerInput}
+                            onChange={(e) => setTickerInput(e.target.value)}
+                            className="flex-grow bg-gray-700 text-gray-100 border border-gray-600 rounded-lg p-3 text-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200 ease-in-out"
+                        />
+                        <button
+                            onClick={fetchTickerStats}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 w-full sm:w-auto transition duration-300 ease-in-out transform hover:scale-105"
+                            disabled={loading.ticker}
+                        >
+                            {loading.ticker ? 'Loading...' : 'Get Ticker Stats'}
+                        </button>
+                    </div>
+                    <JsonDisplay data={tickerStats} error={error.ticker} />
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default App;
