@@ -12,7 +12,7 @@ def test_docker_services():
     print("🐳 PROBANDO MICROSERVICIOS EN DOCKER")
     print("=" * 50)
     
-    # URLs de los servicios
+    # URLs de los servicios 1
     loader_url = "http://localhost:8000"
     stats_url = "http://localhost:8001"
     
@@ -22,7 +22,7 @@ def test_docker_services():
     try:
         response = requests.get(f"{loader_url}/health", timeout=10)
         if response.status_code == 200:
-            print("✅ ms_loader está disponible")
+            print("✅ ms_loader está disponible jajajaja")
             print_json_pretty(response.json(), "MS_LOADER HEALTH")
         else:
             print(f"⚠️  ms_loader responde con error: {response.status_code}")
