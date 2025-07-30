@@ -475,7 +475,7 @@ def main():
             ray.init(
                 ignore_reinit_error=True,
                 include_dashboard=False,
-                num_cpus=0.5, # Limitar CPUs para Ray en general
+                num_cpus=1, # Limitar CPUs para Ray en general
                 object_store_memory=500 * 1024 * 1024 # 500 MB para el object store
             )
             logger.info("Ray inicializado correctamente")
