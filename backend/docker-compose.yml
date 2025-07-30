@@ -20,7 +20,7 @@ services:
       - ms_net
     depends_on:
       - ms_loader 
-    shm_size: '1g'
+    shm_size: '256m'
 
 networks:
   ms_net:
