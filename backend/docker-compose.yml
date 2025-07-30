@@ -20,6 +20,17 @@ services:
       - ms_net
     depends_on:
       - ms_loader 
+    shm_size: '512m' 
+  ms_stats_sec:
+    build:
+      context: ./ms_stats
+    ports:
+      - "8002:8002"
+    command: python app.py
+    networks:
+      - ms_net
+    depends_on:
+      - ms_loader 
     shm_size: '256m'
 
 networks:
