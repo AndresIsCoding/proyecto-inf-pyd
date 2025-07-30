@@ -89,7 +89,7 @@ def load_data_from_loader():
 # Deployment unificado para manejar todas las rutas
 @serve.deployment(
     num_replicas=1,
-    ray_actor_options={"num_cpus": 1}
+    ray_actor_options={"num_cpus": 0.5}
 )
 class StatsApp:
     def __init__(self):
@@ -475,7 +475,8 @@ def main():
             ray.init(
                 ignore_reinit_error=True,
                 include_dashboard=False,
-                log_to_driver=True
+                num_cpus=0.5, # Limitar CPUs para Ray en general
+                object_store_memory=500 * 1024 * 1024 # 500 MB para el object store
             )
             logger.info("Ray inicializado correctamente")
         else:
