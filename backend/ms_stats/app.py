@@ -89,7 +89,7 @@ def load_data_from_loader():
 # Deployment unificado para manejar todas las rutas
 @serve.deployment(
     num_replicas=1,
-    ray_actor_options={"num_cpus": 0.5}
+    ray_actor_options={"num_cpus": 1}
 )
 class StatsApp:
     def __init__(self):
