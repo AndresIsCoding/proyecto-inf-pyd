@@ -245,7 +245,7 @@ const App = () => {
         <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100 p-4 font-inter">
             <div className="max-w-6xl mx-auto py-8 px-6 bg-gray-900 rounded-2xl shadow-2xl">
                 <h1 className="text-5xl font-extrabold text-center mb-12 text-blue-400 drop-shadow-lg">
-                    📊 Financial Stats Dashboard
+                    📊 Panel de Estadísticas Financieras
                 </h1>
 
                 {/* Health Check Section */}
@@ -269,11 +269,11 @@ const App = () => {
 
         return (
             <h2 className={`text-3xl font-semibold mb-6 ${titleColor}`}>
-                {statusEmoji} Service Health
+                {statusEmoji} Estado del Servicio
             </h2>
         );
     })() : (
-        <h2 className="text-3xl font-semibold mb-6 text-blue-300">Service Health</h2>
+        <h2 className="text-3xl font-semibold mb-6 text-blue-300">Estado del Servicio</h2>
     )}
 
                     {/* Health Data */}
@@ -285,16 +285,16 @@ const App = () => {
                         ) : healthData && (
                             <>
                                 <p className="mb-2">
-                                    <strong>ms_stats Service:</strong>{" "}
+                                    <strong>Servicio ms_stats:</strong>{" "}
                                     <span className={healthData.data_loaded ? "text-green-400 font-semibold" : "text-yellow-400 font-semibold"}>
                                         {healthData.data_loaded ? "Ready" : (healthData.loading ? "Loading" : "No Data")}
                                     </span>
                                 </p>
-                                <p className="ml-4 text-gray-400">Records Loaded: {healthData.records}</p>
-                                <p className="ml-4 text-gray-400">Message: {healthData.message}</p>
+                                <p className="ml-4 text-gray-400">Registros Cargados: {healthData.records}</p>
+                                <p className="ml-4 text-gray-400">Mensaje: {healthData.message}</p>
 
                                 <p className="mt-4 mb-2">
-                                    <strong>ms_loader Connection:</strong>{" "}
+                                    <strong>Conexión ms_loader:</strong>{" "}
                                     <span className={
                                         ["connected", "ok"].includes(healthData.ms_loader_connection?.toLowerCase())
                                             ? "text-green-400 font-semibold"
@@ -306,7 +306,7 @@ const App = () => {
                                     </span>
                                 </p>
                                 
-                                <p className="ml-4 text-gray-400">Loader Status: {JSON.stringify(healthData.ms_loader_status, null, 2)}</p>
+                                <p className="ml-4 text-gray-400">Estado del Cargador: {JSON.stringify(healthData.ms_loader_status, null, 2)}</p>
                             </>
                         )}
                     </div>
@@ -317,7 +317,7 @@ const App = () => {
                         className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 ease-in-out transform hover:scale-105"
                         disabled={loading.health}
                     >
-                        {loading.health ? 'Refreshing...' : 'Refresh Health'}
+                        {loading.health ? 'Refrescando...' : 'Refrescar la Salud'}
                     </button>
                 </div>
 
@@ -325,14 +325,14 @@ const App = () => {
                 {/* Reload Data Section */} 
                             
                 <div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
-                    <h2 className="text-3xl font-semibold mb-6 text-purple-300">Reload Data</h2>
-                    <p className="mb-6 text-gray-300">Manually trigger a data reload from `ms_loader`. This is useful if data loading failed initially.</p>
+                    <h2 className="text-3xl font-semibold mb-6 text-purple-300">Recargar Datos</h2>
+                    <p className="mb-6 text-gray-300">Activar manualmente una recarga de datos desde `ms_loader`. Esto resulta útil si la carga de datos ha fallado inicialmente.</p>
                     <button
                         onClick={reloadStatsData}
                         className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 transition duration-300 ease-in-out transform hover:scale-105"
                         disabled={loading.reload}
                     >
-                        {loading.reload ? 'Reloading...' : 'Reload Data'}
+                        {loading.reload ? 'Recargando...' : 'Recargar Datos'}
                     </button>
                     {reloadResult && (
                         <div className="mt-6 text-sm text-gray-300">
@@ -350,13 +350,13 @@ const App = () => {
 
                 {/* Price Stats */}
                 <div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
-                    <h2 className="text-3xl font-semibold mb-6 text-red-300">Price Statistics</h2>
+                    <h2 className="text-3xl font-semibold mb-6 text-red-300">Estadísticas de Precio</h2>
                     <button
                         onClick={fetchPriceStats}
                         className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
                         disabled={loading.price}
                     >
-                        {loading.price ? 'Loading...' : 'Get Price Stats'}
+                        {loading.price ? 'Cargando...' : 'Estadísticas de Precios'}
                     </button>
 
                     {/* REMOVED: <JsonDisplay data={priceStats} error={error.price} /> */}
@@ -378,7 +378,7 @@ const App = () => {
                 
                     {/* Top 5 Valued Companies */}
                 <div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
-                    <h2 className="text-3xl font-semibold mb-6 text-green-300">Top 5 Most Valuable Companies</h2>
+                    <h2 className="text-3xl font-semibold mb-6 text-green-300">Top 5 Empresas Más Valiosas</h2>
                     <button
                         onClick={fetchTopValuedTickers}
                         className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
@@ -397,12 +397,12 @@ const App = () => {
 
                    {/* Ticker Specific Stats */}
                 <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
-                    <h2 className="text-3xl font-semibold mb-6 text-indigo-300">Ticker Statistics</h2>
+                    <h2 className="text-3xl font-semibold mb-6 text-indigo-300">Estadísticas de Ticker</h2>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
                         <input
                             type="text"
                             id="tickerInput"
-                            placeholder="Enter Ticker (e.g., AAPL)"
+                            placeholder="Introduzca el Ticker (e.g., AAPL)"
                             value={tickerInput}
                             onChange={(e) => setTickerInput(e.target.value)}
                             className="flex-grow bg-gray-700 text-gray-100 border border-gray-600 rounded-lg p-3 text-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200 ease-in-out"
@@ -412,7 +412,7 @@ const App = () => {
                             className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 w-full sm:w-auto transition duration-300 ease-in-out transform hover:scale-105"
                             disabled={loading.ticker}
                         >
-                            {loading.ticker ? 'Loading...' : 'Get Ticker Stats'}
+                            {loading.ticker ? 'Cargando...' : 'Estadísticas del Ticker'}
                         </button>
                     </div>
                     {tickerStats && !error.ticker && (
@@ -428,7 +428,7 @@ const App = () => {
 
                     {/* Comparador de dos Tickers */}
                     <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 mt-8">
-                    <h2 className="text-3xl font-semibold mb-6 text-white">Compare Two Tickers</h2>
+                    <h2 className="text-3xl font-semibold mb-6 text-white">Comparar Dos Tickers</h2>
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
                         <input
                         type="text"
@@ -449,7 +449,7 @@ const App = () => {
                         className="bg-white hover:bg-gray-100 text-black font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 w-full sm:w-auto transition duration-300 ease-in-out transform hover:scale-105"
                         disabled={loadingCompare}
                         >
-                        {loadingCompare ? 'Loading...' : 'Compare'}
+                        {loadingCompare ? 'Cargando...' : 'Comparar Tickers'}
                         </button>
                     </div>
 
