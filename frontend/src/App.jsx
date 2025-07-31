@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react'; 
 import './App.css'
+import Top5Chart from './Top5Chart'; 
+import GlobalPriceComparisonChart from './GlobalPriceComparisonChart';
+import ComparativaAperturaCierre from "./ComparativaAperturaCierre";
+
 
 const MS_STATS_URL = "http://localhost:8001"; // Your ms_stats service URL
 
@@ -47,6 +51,8 @@ const App = () => {
         ticker: null,
     });
 
+    
+
     // Helper function to make API calls
     const fetchData = async (endpoint, setter, loadingKey, errorKey, method = 'GET') => {
         setLoading(prev => ({ ...prev, [loadingKey]: true }));
@@ -90,6 +96,10 @@ const App = () => {
         }
     };
 
+    const [topTickers, setTopTickers] = useState([]);
+    const [loadingTop, setLoadingTop] = useState(false);
+    const [errorTop, setErrorTop] = useState(null);
+
     // Fetch Basic Stats
     const fetchBasicStats = () => fetchData('/stats/basic', setBasicStats, 'basic', 'basic');
 
@@ -109,10 +119,55 @@ const App = () => {
         fetchData(`/stats/by_ticker/${tickerInput.toUpperCase()}`, setTickerStats, 'ticker', 'ticker');
     };
 
+
+    const fetchTopValuedTickers = async () => {
+        setLoadingTop(true);
+        setErrorTop(null);
+        try {
+            // Paso 1: Obtener sample tickers
+            const summaryRes = await fetch(`${MS_STATS_URL}/stats/summary`);
+            const summaryData = await summaryRes.json();
+            const sampleTickers = summaryData.sample_tickers;
+
+            // Paso 2: Hacer fetch a cada ticker y calcular su promedio de cierre
+            const results = await Promise.allSettled(sampleTickers.map(async (ticker) => {
+                const res = await fetch(`${MS_STATS_URL}/stats/by_ticker/${ticker}`);
+                if (!res.ok) throw new Error(`Error fetching ${ticker}`);
+                const data = await res.json();
+                return {
+                    ticker: data.ticker,
+                    averageClose: data.statistics.mean.close
+                };
+            }));
+
+            // Paso 3: Filtrar errores y ordenar
+            const successful = results
+                .filter(r => r.status === 'fulfilled')
+                .map(r => r.value)
+                .sort((a, b) => b.averageClose - a.averageClose)
+                .slice(0, 5);
+
+            setTopTickers(successful);
+        } catch (err) {
+            setErrorTop(err.message);
+        } finally {
+            setLoadingTop(false);
+        }
+    };
+
     // Initial load of health status when the component mounts
     useEffect(() => {
+    // Llamada inicial
+    fetchHealth();
+
+    // Configurar recarga automática cada 10 segundos
+    const interval = setInterval(() => {
         fetchHealth();
-    }, []);
+    }, 60000); // 60000 ms = 1 minuto
+
+    // Limpiar el intervalo al desmontar el componente
+    return () => clearInterval(interval);
+}, []);
 
     // Function to render status indicator
     const renderStatusIndicator = (status) => {
@@ -136,7 +191,33 @@ const App = () => {
 
                 {/* Health Check Section */}
                 <div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
-                    <h2 className="text-3xl font-semibold mb-6 text-blue-300">Service Health</h2>
+    {/* Health Title with dynamic color and emoji */}
+    {!loading.health && !error.health && healthData ? (() => {
+        const isStatsReady = healthData.data_loaded;
+        const isLoaderReady = ["connected", "ok"].includes(healthData.ms_loader_connection?.toLowerCase());
+        const isLoading = healthData.loading;
+
+        let titleColor = "text-red-400";
+        let statusEmoji = "❌";
+
+        if (isStatsReady && isLoaderReady) {
+            titleColor = "text-green-400";
+            statusEmoji = "🟢";
+        } else if (isLoading || healthData.ms_loader_connection?.toLowerCase() === "connecting") {
+            titleColor = "text-yellow-400";
+            statusEmoji = "⏳";
+        }
+
+        return (
+            <h2 className={`text-3xl font-semibold mb-6 ${titleColor}`}>
+                {statusEmoji} Service Health
+            </h2>
+        );
+    })() : (
+        <h2 className="text-3xl font-semibold mb-6 text-blue-300">Service Health</h2>
+    )}
+
+                    {/* Health Data */}
                     <div className="text-lg mb-6">
                         {loading.health ? (
                             <p className="text-gray-400">Fetching health status...</p>
@@ -145,17 +226,33 @@ const App = () => {
                         ) : healthData && (
                             <>
                                 <p className="mb-2">
-                                    <strong>ms_stats Service:</strong> {renderStatusIndicator(healthData.data_loaded)} {healthData.data_loaded ? 'Ready' : (healthData.loading ? 'Loading' : 'No Data')}
+                                    <strong>ms_stats Service:</strong>{" "}
+                                    <span className={healthData.data_loaded ? "text-green-400 font-semibold" : "text-yellow-400 font-semibold"}>
+                                        {healthData.data_loaded ? "Ready" : (healthData.loading ? "Loading" : "No Data")}
+                                    </span>
                                 </p>
                                 <p className="ml-4 text-gray-400">Records Loaded: {healthData.records}</p>
                                 <p className="ml-4 text-gray-400">Message: {healthData.message}</p>
+
                                 <p className="mt-4 mb-2">
-                                    <strong>ms_loader Connection:</strong> {renderStatusIndicator(healthData.ms_loader_connection)} {healthData.ms_loader_connection}
+                                    <strong>ms_loader Connection:</strong>{" "}
+                                    <span className={
+                                        ["connected", "ok"].includes(healthData.ms_loader_connection?.toLowerCase())
+                                            ? "text-green-400 font-semibold"
+                                            : (healthData.ms_loader_connection?.toLowerCase() === "connecting"
+                                                ? "text-yellow-400 font-semibold"
+                                                : "text-red-400 font-semibold")
+                                    }>
+                                        {healthData.ms_loader_connection}
+                                    </span>
                                 </p>
+                                
                                 <p className="ml-4 text-gray-400">Loader Status: {JSON.stringify(healthData.ms_loader_status, null, 2)}</p>
                             </>
                         )}
                     </div>
+
+                    {/* Refresh Button */}
                     <button
                         onClick={fetchHealth}
                         className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition duration-300 ease-in-out transform hover:scale-105"
@@ -165,7 +262,9 @@ const App = () => {
                     </button>
                 </div>
 
-                {/* Reload Data Section */}
+
+                {/* Reload Data Section */} 
+                            
                 <div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
                     <h2 className="text-3xl font-semibold mb-6 text-purple-300">Reload Data</h2>
                     <p className="mb-6 text-gray-300">Manually trigger a data reload from `ms_loader`. This is useful if data loading failed initially.</p>
@@ -188,19 +287,57 @@ const App = () => {
 
                 {/* Statistics Sections Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    {/* Basic Stats */}
-                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
-                        <h2 className="text-3xl font-semibold mb-6 text-green-300">Basic Statistics</h2>
-                        <button
-                            onClick={fetchBasicStats}
-                            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
-                            disabled={loading.basic}
-                        >
-                            {loading.basic ? 'Loading...' : 'Get Basic Stats'}
-                        </button>
-                        <JsonDisplay data={basicStats} error={error.basic} />
-                    </div>
 
+
+
+{/* Price Stats */}
+<div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
+    <h2 className="text-3xl font-semibold mb-6 text-red-300">Price Statistics</h2>
+    <button
+        onClick={fetchPriceStats}
+        className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
+        disabled={loading.price}
+    >
+        {loading.price ? 'Loading...' : 'Get Price Stats'}
+    </button>
+
+    {/* REMOVED: <JsonDisplay data={priceStats} error={error.price} /> */}
+
+    {priceStats && (
+        <div className="mt-8">
+            <GlobalPriceComparisonChart />
+            <ComparativaAperturaCierre />
+        </div>
+    )}
+</div>
+
+
+
+
+
+
+
+                
+                    {/* Top 5 Valued Companies */}
+                <div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
+                    <h2 className="text-3xl font-semibold mb-6 text-green-300">Top 5 Empresas Más Valiosas</h2>
+                    <button
+                        onClick={fetchTopValuedTickers}
+                        className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
+                        disabled={loadingTop}
+                    >
+                        {loadingTop ? 'Cargando...' : 'Obtener Top 5'}
+                    </button>
+
+                    {errorTop && <p className="text-red-400">{errorTop}</p>}
+
+                    {topTickers.length > 0 && (
+                        <Top5Chart data={topTickers} />
+                    )}
+                </div>
+
+
+                   
                     {/* Summary Stats */}
                     <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
                         <h2 className="text-3xl font-semibold mb-6 text-yellow-300">Data Summary</h2>
@@ -214,19 +351,17 @@ const App = () => {
                         <JsonDisplay data={summaryStats} error={error.summary} />
                     </div>
                 </div>
+                
 
-                {/* Price Stats */}
-                <div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
-                    <h2 className="text-3xl font-semibold mb-6 text-red-300">Price Statistics</h2>
-                    <button
-                        onClick={fetchPriceStats}
-                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
-                        disabled={loading.price}
-                    >
-                        {loading.price ? 'Loading...' : 'Get Price Stats'}
-                    </button>
-                    <JsonDisplay data={priceStats} error={error.price} />
-                </div>
+
+
+
+
+
+
+
+
+                
 
                 {/* Ticker Specific Stats */}
                 <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
