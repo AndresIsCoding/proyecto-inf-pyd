@@ -3,7 +3,8 @@ import './App.css'
 import Top5Chart from './Top5Chart'; 
 import GlobalPriceComparisonChart from './GlobalPriceComparisonChart';
 import ComparativaAperturaCierre from "./ComparativaAperturaCierre";
-
+import TickerCharts from './TickerCharts'
+import DualRadarChart from './DualRadarChart';
 
 const MS_STATS_URL = "http://localhost:8001"; // Your ms_stats service URL
 
@@ -53,6 +54,47 @@ const App = () => {
 
     
 
+    //Comparation two tickers
+    const [compareTickers, setCompareTickers] = useState(['', '']);
+    const [compareStats, setCompareStats] = useState({});
+    const [loadingCompare, setLoadingCompare] = useState(false);
+    const [errorCompare, setErrorCompare] = useState(null);
+
+    const fetchCompareStats = async () => {
+    const [t1, t2] = compareTickers.map(t => t.toUpperCase());
+    if (!t1 || !t2 || t1 === t2) {
+        setErrorCompare({ message: "Introduce dos tickers distintos." });
+        return;
+    }
+
+    setLoadingCompare(true);
+    setErrorCompare(null);
+
+    try {
+        const [res1, res2] = await Promise.all([
+        fetch(`${MS_STATS_URL}/stats/by_ticker/${t1}`),
+        fetch(`${MS_STATS_URL}/stats/by_ticker/${t2}`),
+        ]);
+        const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
+
+        if (!res1.ok || !res2.ok) {
+        throw new Error("Uno o ambos tickers no devolvieron datos válidos.");
+        }
+
+        setCompareStats({ [t1]: data1.statistics, [t2]: data2.statistics });
+    } catch (err) {
+        setErrorCompare({ message: err.message });
+        setCompareStats({});
+    } finally {
+        setLoadingCompare(false);
+    }
+    };
+
+
+
+
+
+
     // Helper function to make API calls
     const fetchData = async (endpoint, setter, loadingKey, errorKey, method = 'GET') => {
         setLoading(prev => ({ ...prev, [loadingKey]: true }));
@@ -73,7 +115,7 @@ const App = () => {
             setLoading(prev => ({ ...prev, [loadingKey]: false }));
         }
     };
-
+    
     // Fetch Health Status
     const fetchHealth = () => fetchData('/health', setHealthData, 'health', 'health');
 
@@ -154,6 +196,23 @@ const App = () => {
             setLoadingTop(false);
         }
     };
+
+
+    //Carga de datos automatica
+    const [autoReloadTriggered, setAutoReloadTriggered] = useState(false);
+
+    useEffect(() => {
+    if (!autoReloadTriggered && healthData) {
+        const isLoaderOk = healthData.ms_loader_connection?.toLowerCase() === 'ok';
+        const isStatsNotReady = healthData.data_loaded !== true;
+
+        if (isLoaderOk && isStatsNotReady) {
+            console.log('⏳ Triggering auto reload...');
+            reloadStatsData();  // ejecuta la recarga
+            setAutoReloadTriggered(true); // evita múltiples recargas
+        }
+    }
+}, [healthData, autoReloadTriggered]);
 
     // Initial load of health status when the component mounts
     useEffect(() => {
@@ -280,7 +339,6 @@ const App = () => {
                             <p className={reloadResult.success ? 'text-green-400' : 'text-red-400'}>
                                 {reloadResult.message}
                             </p>
-                            <JsonDisplay data={reloadResult} error={error.reload} />
                         </div>
                     )}
                 </div>
@@ -290,26 +348,26 @@ const App = () => {
 
 
 
-{/* Price Stats */}
-<div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
-    <h2 className="text-3xl font-semibold mb-6 text-red-300">Price Statistics</h2>
-    <button
-        onClick={fetchPriceStats}
-        className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
-        disabled={loading.price}
-    >
-        {loading.price ? 'Loading...' : 'Get Price Stats'}
-    </button>
+                {/* Price Stats */}
+                <div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
+                    <h2 className="text-3xl font-semibold mb-6 text-red-300">Price Statistics</h2>
+                    <button
+                        onClick={fetchPriceStats}
+                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
+                        disabled={loading.price}
+                    >
+                        {loading.price ? 'Loading...' : 'Get Price Stats'}
+                    </button>
 
-    {/* REMOVED: <JsonDisplay data={priceStats} error={error.price} /> */}
+                    {/* REMOVED: <JsonDisplay data={priceStats} error={error.price} /> */}
 
-    {priceStats && (
-        <div className="mt-8">
-            <GlobalPriceComparisonChart />
-            <ComparativaAperturaCierre />
-        </div>
-    )}
-</div>
+                    {priceStats && (
+                        <div className="mt-8">
+                            <GlobalPriceComparisonChart />
+                            <ComparativaAperturaCierre />
+                        </div>
+                    )}
+                </div>
 
 
 
@@ -320,7 +378,7 @@ const App = () => {
                 
                     {/* Top 5 Valued Companies */}
                 <div className="bg-gray-800 p-8 rounded-xl shadow-lg mb-8 border border-gray-700">
-                    <h2 className="text-3xl font-semibold mb-6 text-green-300">Top 5 Empresas Más Valiosas</h2>
+                    <h2 className="text-3xl font-semibold mb-6 text-green-300">Top 5 Most Valuable Companies</h2>
                     <button
                         onClick={fetchTopValuedTickers}
                         className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
@@ -337,33 +395,7 @@ const App = () => {
                 </div>
 
 
-                   
-                    {/* Summary Stats */}
-                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
-                        <h2 className="text-3xl font-semibold mb-6 text-yellow-300">Data Summary</h2>
-                        <button
-                            onClick={fetchSummaryStats}
-                            className="bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-opacity-50 mb-6 transition duration-300 ease-in-out transform hover:scale-105"
-                            disabled={loading.summary}
-                        >
-                            {loading.summary ? 'Loading...' : 'Get Summary'}
-                        </button>
-                        <JsonDisplay data={summaryStats} error={error.summary} />
-                    </div>
-                </div>
-                
-
-
-
-
-
-
-
-
-
-                
-
-                {/* Ticker Specific Stats */}
+                   {/* Ticker Specific Stats */}
                 <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
                     <h2 className="text-3xl font-semibold mb-6 text-indigo-300">Ticker Statistics</h2>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
@@ -383,8 +415,60 @@ const App = () => {
                             {loading.ticker ? 'Loading...' : 'Get Ticker Stats'}
                         </button>
                     </div>
-                    <JsonDisplay data={tickerStats} error={error.ticker} />
+                    {tickerStats && !error.ticker && (
+                        <TickerCharts stats={tickerStats} />
+                    )}
                 </div>
+
+
+
+
+
+
+
+                    {/* Comparador de dos Tickers */}
+                    <div className="bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700 mt-8">
+                    <h2 className="text-3xl font-semibold mb-6 text-white">Compare Two Tickers</h2>
+                    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                        <input
+                        type="text"
+                        placeholder="Primer Ticker (ej. AAPL)"
+                        value={compareTickers[0]}
+                        onChange={(e) => setCompareTickers([e.target.value, compareTickers[1]])}
+                        className="flex-grow bg-gray-700 text-gray-100 border border-gray-600 rounded-lg p-3 text-lg"
+                        />
+                        <input
+                        type="text"
+                        placeholder="Segundo Ticker (ej. MSFT)"
+                        value={compareTickers[1]}
+                        onChange={(e) => setCompareTickers([compareTickers[0], e.target.value])}
+                        className="flex-grow bg-gray-700 text-gray-100 border border-gray-600 rounded-lg p-3 text-lg"
+                        />
+                        <button
+                        onClick={fetchCompareStats}
+                        className="bg-white hover:bg-gray-100 text-black font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 w-full sm:w-auto transition duration-300 ease-in-out transform hover:scale-105"
+                        disabled={loadingCompare}
+                        >
+                        {loadingCompare ? 'Loading...' : 'Compare'}
+                        </button>
+                    </div>
+
+                    {errorCompare && <p className="text-red-400 mb-4">{errorCompare.message}</p>}
+
+                    {Object.keys(compareStats).length === 2 && (
+                        <DualRadarChart
+                        data={compareStats}
+                        tickers={compareTickers.map((t) => t.toUpperCase())}
+                        />
+                    )}
+                    </div>
+
+
+              
+                    
+                </div>
+                
+
             </div>
         </div>
     );
