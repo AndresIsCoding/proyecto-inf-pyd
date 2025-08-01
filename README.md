@@ -119,3 +119,6 @@ python run_benchmark.py --quick
 
 4. Solo verificar que servicios estén listos
 python run_benchmark.py --check
+
+5. Visualizar resultados en benchmark_report.html
+    
