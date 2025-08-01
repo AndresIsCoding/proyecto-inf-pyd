@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Benchmark - ms_stats</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2E86AB;
+            text-align: center;
+            border-bottom: 3px solid #2E86AB;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #A23B72;
+            margin-top: 30px;
+        }
+        .summary-box {
+            background-color: #f8f9fa;
+            border-left: 5px solid #2E86AB;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .chart-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .chart-container img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #2E86AB;
+            color: white;
+        }
+        .improvement-positive {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .improvement-negative {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Reporte de Benchmark - ms_stats</h1>
+        <p><strong>Fecha:</strong> 31/07/2025 23:07:14</p>
+        <p><strong>Archivo de resultados:</strong> benchmark_results_20250731_230707.json</p>
+        <p><strong>Total de pruebas:</strong> 100</p>
+        
+        <div class="summary-box">
+            <h3>🎯 Objetivo del Benchmark</h3>
+            <p>Comparar el rendimiento entre dos implementaciones del microservicio ms_stats:</p>
+            <ul>
+                <li><strong>Ray Serve (Paralelo):</strong> Puerto 8001 - Procesamiento asíncrono y paralelo</li>
+                <li><strong>Flask (Secuencial):</strong> Puerto 8002 - Procesamiento síncrono tradicional</li>
+            </ul>
+        </div>
+        
+        <h2>📈 Gráficos de Rendimiento</h2>
+        
+        <div class="chart-container">
+            <h3>Comparación de Throughput</h3>
+            <img src="benchmark_plots/throughput_comparison.png" alt="Throughput Comparison">
+        </div>
+        
+        <div class="chart-container">
+            <h3>Comparación de Latencia</h3>
+            <img src="benchmark_plots/latency_comparison.png" alt="Latency Comparison">
+        </div>
+        
+        <div class="chart-container">
+            <h3>Escalabilidad con Concurrencia</h3>
+            <img src="benchmark_plots/concurrency_scaling.png" alt="Concurrency Scaling">
+        </div>
+        
+        <div class="chart-container">
+            <h3>Rendimiento por Endpoint</h3>
+            <img src="benchmark_plots/endpoint_performance.png" alt="Endpoint Performance">
+        </div>
+        
+        <div class="chart-container">
+            <h3>Uso de Recursos del Sistema</h3>
+            <img src="benchmark_plots/system_resources.png" alt="System Resources">
+        </div>
+        
+        <div class="chart-container">
+            <h3>Tasas de Error</h3>
+            <img src="benchmark_plots/error_rates.png" alt="Error Rates">
+        </div>
+        
+        <h2>📋 Resumen de Resultados</h2>
+        <div class="chart-container">
+            <img src="benchmark_plots/summary_table.png" alt="Summary Table">
+        </div>
+        
+        <h2>🔍 Análisis y Conclusiones</h2>
+        <div class="summary-box">
+            <h3>Ventajas de Ray Serve (Paralelo):</h3>
+            <ul>
+                <li>Mayor throughput bajo alta concurrencia</li>
+                <li>Mejor escalabilidad horizontal</li>
+                <li>Procesamiento asíncrono eficiente</li>
+                <li>Manejo optimizado de múltiples peticiones simultáneas</li>
+            </ul>
+            
+            <h3>Ventajas de Flask (Secuencial):</h3>
+            <ul>
+                <li>Menor complejidad de implementación</li>
+                <li>Menor uso de recursos en cargas bajas</li>
+                <li>Debugging más sencillo</li>
+                <li>Menor latencia inicial en algunos casos</li>
+            </ul>
+        </div>
+        
+        <h2>📊 Datos Técnicos</h2>
+        <p><strong>Configuración del benchmark:</strong></p>
+        <ul>
+            <li>Usuarios concurrentes probados: 1, 5, 10, 20, 50</li>
+            <li>Duración de pruebas: 30s y 60s</li>
+            <li>Endpoints probados: /health, /stats/basic, /stats/summary, /stats/prices, /stats/by_ticker/AAPL</li>
+            <li>Peticiones de calentamiento: 10 por servicio</li>
+        </ul>
+        
+        <div class="footer">
+            <p>Reporte generado automáticamente por el sistema de benchmark</p>
+            <p>Archivos de datos: benchmark_results_20250731_230707.json</p>
+        </div>
+    </div>
+</body>
+</html>
+        
