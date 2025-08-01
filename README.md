@@ -104,4 +104,18 @@ Proyecto desarrollado para la materia de Paralelas y Distribuidas. Incluye un ba
    npm install -g serve
    serve -s build
    ```
+#### Benchmarking 
 
+Instrucciones para realizar benchmarks comparatvos entre version secuencial y paralela
+
+1. Configurar entorno (solo la primera vez)
+python setup_benchmark.py
+
+2. Ejecutar benchmark completo (10-15 min)
+python run_benchmark.py
+
+3. O ejecutar prueba rápida (2-3 min)
+python run_benchmark.py --quick
+
+4. Solo verificar que servicios estén listos
+python run_benchmark.py --check
