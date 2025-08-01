@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  ms_loader:
+    build: ./ms_loader
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./data:/app/data
+    networks:
+      - ms_network
+
+  ms_stats:
+    build: 
+      context: ./ms_stats
+      dockerfile: Dockerfile.ray
+    ports:
+      - "8001:8001"
+    depends_on:
+      - ms_loader
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MS_LOADER_URL=http://ms_loader:8000
+    networks:
+      - ms_network
+
+  ms_stats_sec:
+    build:
+      context: ./ms_stats
+      dockerfile: Dockerfile.flask
+    ports:
+      - "8002:8002"
+    depends_on:
+      - ms_loader
+    environment:
+      - PYTHONUNBUFFERED=1
+      - MS_LOADER_URL=http://ms_loader:8000
+    networks:
+      - ms_network
+
+networks:
+  ms_network:
+    driver: bridge
+
+volumes:
+  data_volume:
